@@ -4,14 +4,16 @@ trigger:
       - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'    # since you’re using gradlew.bat
 
 steps:
-  - task: UseJava@1
+  - task: JavaToolInstaller@0
     inputs:
       versionSpec: '17'
+      jdkArchitectureOption: 'x64'
+    displayName: 'Install Java 17'
 
-  - script: ./gradlew.bat clean build --no-daemon
+  - script: .\gradlew.bat clean build --no-daemon
     displayName: 'Build and Test'
 
   - task: PublishTestResults@2
