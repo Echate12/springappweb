@@ -1,0 +1,21 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - task: UseJava@1
+    inputs:
+      versionSpec: '17'
+
+  - script: ./gradlew.bat clean build --no-daemon
+    displayName: 'Build and Test'
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: '**/build/test-results/**/*.xml'
+      failTaskOnFailedTests: true
