@@ -1,51 +1,53 @@
 plugins {
-    id 'java'
+    // Spring Boot et gestion des dépendances
     id 'org.springframework.boot' version '3.5.0'
     id 'io.spring.dependency-management' version '1.1.7'
+    // Plugin Java standard
+    id 'java'
 }
 
-group = 'com.example'
+group   = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
+/* --------- Java toolchain --------- */
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
-    }
+/* --------- Spring Boot --------- */
+springBoot {
+    // Classe contenant la méthode main (à adapter si besoin)
+    mainClass = 'com.example.demo.DemoApplication'
 }
 
+/* --------- Dépôts Maven --------- */
 repositories {
     mavenCentral()
 }
 
+/* --------- Dépendances --------- */
 dependencies {
-    // Spring Boot Starters
+    // Starters Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-    // MySQL JDBC driver (version must be specified)
+    // Driver MySQL – version explicitement fixée
     runtimeOnly 'mysql:mysql-connector-java:8.0.33'
 
-    // Lombok for code generation
+    // Lombok (compilation uniquement)
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // Testing
+    // Tests : starter + base H2 pour exécuter les tests sans MySQL
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'com.h2database:h2:2.1.214'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly   'org.junit.platform:junit-platform-launcher'
 }
 
-tasks.named('bootJar') {
-    enabled = false
-}
-
+/* --------- Tâches --------- */
 tasks.named('test') {
     useJUnitPlatform()
 }
