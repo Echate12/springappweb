@@ -1,26 +1,18 @@
+# ──────────────────────────────────────────────────────────────
+# Pipeline CI – springweb (Spring Boot + Thymeleaf)
+# ──────────────────────────────────────────────────────────────
 trigger:
   branches:
     include:
-      - main          # pipeline déclenché sur chaque push dans main
+      - main
 
-# ---- Pool ------------------------------------------------------
 pool:
-  name: Default       # self-hosted agent (MyLocalAgent) dans le pool “Default”
+  name: Default        # agent self-hosted MyLocalAgent
 
-# ---- Étapes ----------------------------------------------------
 steps:
-  # Installe Java 17 sur l’agent
-  - task: JavaToolInstaller@0
-    displayName: 'Install Java 17'
-    inputs:
-      versionSpec: '17'
-      jdkArchitectureOption: 'x64'
-
-  # Compile le projet et exécute les tests JUnit
   - script: .\gradlew.bat clean build --no-daemon
     displayName: 'Build and Test'
 
-  # Publie les résultats JUnit dans Azure DevOps
   - task: PublishTestResults@2
     displayName: 'Publish Test Results'
     inputs:
