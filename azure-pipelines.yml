@@ -1,71 +1,29 @@
-trigger:
-  branches:
-    include:
-      - main
+- stage: DockerPush
+displayName: 📦 Build & Push Docker
+dependsOn: Build
+jobs:
+  - job: docker
+    displayName: Build and Push Image
+    steps:
+      # Ancienne version (à supprimer) :
+-          - task: Docker@2
+-            displayName: Build and Push to ACR
+-            inputs:
+-              command: buildAndPush
+-              repository: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME)'
+-              dockerfile: '**/Dockerfile'
+-              azureSubscription: 'uami-managed-identity'`nazureazureSubscription: 'uami-managed-identity'`nazureContainerRegistry: '$(ACR_NAME)'
+-              tags: |
+-                latest
 
-# Si tu utilises ton agent self-hosted :
-pool:
-  name: Default
-
-variables:
-  # Nom de ton ACR sans .azurecr.io
-  ACR_NAME: springacr98222
-  # Cette variable sert à construire pleinement l’adresse
-  ACR_LOGIN_SERVER: $(ACR_NAME).azurecr.io
-  IMAGE_NAME: springweb
-
-stages:
-  - stage: Build
-    displayName: 🛠️ Build & Test
-    jobs:
-      - job: build
-        displayName: Build and Test
-        steps:
-          - task: JavaToolInstaller@0
-            displayName: Install Java 17
-            inputs:
-              versionSpec: '17'
-              jdkArchitectureOption: 'x64'
-
-          - script: .\gradlew.bat clean test --no-daemon
-            displayName: Build and run tests
-
-          - task: PublishTestResults@2
-            displayName: Publish Test Results
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/build/test-results/**/*.xml'
-              failTaskOnFailedTests: true
-
-  - stage: DockerPush
-    displayName: 📦 Build & Push Docker
-    dependsOn: Build
-    jobs:
-      - job: docker
-        displayName: Build and Push Image
-        steps:
-          # Se connecter à ton ACR via la service connection
-          - task: Docker@2
-            displayName: Build and Push to ACR
-            inputs:
-              command: buildAndPush
-              repository: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME)'
-              dockerfile: '**/Dockerfile'
-              containerRegistry: 'uami-managed-identity'   # <== nom de ta Service Connection
-              tags: |
-                latest
-
-  - stage: Deploy
-    displayName: 🚀 Deploy to Web App
-    dependsOn: DockerPush
-    jobs:
-      - job: deploy
-        displayName: Deploy Container to Azure Web App
-        steps:
-          - task: AzureWebAppContainer@1
-            displayName: Deploy to Azure Web App (Container)
-            inputs:
-              azureSubscription: 'uami-managed-identity'   # nom exact de ta Service Connection
-              appName: 'springweb-app'                 # nom exact de ton Web App
-              imageName: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest'
-              # if your Web App is Linux + container, tu peux laisser les autres champs par défaut
+      # Nouvelle version :
++          - task: Docker@2
++            displayName: Build and Push to ACR
++            inputs:
++              command: buildAndPush
++              azureSubscription: 'uami-managed-identity'
++              azureazureSubscription: 'uami-managed-identity'`nazureazureSubscription: 'uami-managed-identity'`nazureContainerRegistry: '$(ACR_NAME)'
++              repository: '$(IMAGE_NAME)'
++              dockerfile: '**/Dockerfile'
++              tags: |
++                latest
