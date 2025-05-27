@@ -1,0 +1,22 @@
+# ---------- Build stage ----------
+FROM eclipse-temurin:17-jdk-jammy AS build
+WORKDIR /workspace
+
+# Copier le wrapper Gradle et les fichiers de build pour profiter du cache
+COPY gradlew* ./
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
+
+# Pré-télécharger les dépendances (cache)
+RUN ./gradlew dependencies --no-daemon
+
+# Copier le code et construire le jar exécutable
+COPY . .
+RUN ./gradlew bootJar --no-daemon                 # ← seulement bootJar
+
+# ---------- Runtime stage ----------
+FROM eclipse-temurin:17-jre-jammy
+WORKDIR /app
+COPY --from=build /workspace/build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","/app/app.jar"]
