@@ -1,26 +1,17 @@
-   - stage: DockerPush
-     displayName: 📦 Build & Push Docker
-     dependsOn: Build
-     jobs:
-       - job: docker
-         displayName: Build and Push Image
-         steps:
--          - task: Docker@2
--            displayName: Build and Push to ACR
--            inputs:
--              command: buildAndPush
--              repository: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME)'
--              dockerfile: '**/Dockerfile'
--              containerRegistry: 'uami-managed-identity'
--              tags: |
--                latest
-+          - task: Docker@2
-+            displayName: Build and Push to ACR
-+            inputs:
-+              command: buildAndPush
-+              azureSubscription: 'uami-managed-identity'
-+              azureContainerRegistry: '$(ACR_NAME)'
-+              repository: '$(IMAGE_NAME)'
-+              dockerfile: '**/Dockerfile'
-+              tags: |
-+                latest
+- stage: DockerPush
+  displayName: 📦 Build & Push Docker
+  dependsOn: Build
+  jobs:
+    - job: docker
+      displayName: Build and Push Image
+      steps:
+        - task: Docker@2
+          displayName: Build and Push to ACR
+          inputs:
+            command: buildAndPush
+            azureSubscription: 'uami-managed-identity'
+            azureContainerRegistry: '$(ACR_NAME)'
+            repository: '$(IMAGE_NAME)'
+            dockerfile: '**/Dockerfile'
+            tags: |
+              latest
