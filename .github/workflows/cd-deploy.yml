@@ -1,15 +1,12 @@
 name: CD – Deploy to Azure Web App
 
-# Se déclenche après succès du workflow CI ("CI & Publish to ACR")
 on:
   workflow_run:
     workflows: ["CI & Publish to ACR"]
-    types:
-      - completed
+    types: [completed]
 
 jobs:
   deploy:
-    # Ne s'exécute que si le CI s'est terminé avec succès
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
@@ -18,26 +15,22 @@ jobs:
       APP: web-charityapp
       ACR_LOGIN: acrcharityapp.azurecr.io
       IMAGE_NAME: springweb:${{ github.event.workflow_run.head_sha }}
-      # FQDN de votre ACI MySQL
-      DB_FQDN: mysqlaci.westeurope.azurecontainer.io
-      # Chaîne de connexion JDBC
       DB_URL: jdbc:mysql://mysqlaci.westeurope.azurecontainer.io:3306/charitydb?useSSL=false&serverTimezone=UTC
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy container to Web App
-        run: |
-          az webapp config container set \
-            --name $APP \
-            --resource-group $RG \
-            --docker-custom-image-name $ACR_LOGIN/$IMAGE_NAME
+      - name: Deploy to Azure Web App (via publish profile)
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.APP }}
+          publish-profile: ${{ secrets.PUBLISH_PROFILE }}
+          images: ${{ env.ACR_LOGIN }}/${{ env.IMAGE_NAME }}
 
       - name: Configure App Settings
         run: |
