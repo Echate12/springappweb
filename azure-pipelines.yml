@@ -3,73 +3,11 @@ trigger:
     include:
       - main
 
-# Utilisation de votre agent self-hosted (Default)
 pool:
   name: Default
 
-variables:
-  ACR_NAME: springacr98222
-  ACR_LOGIN_SERVER: $(ACR_NAME).azurecr.io
-  IMAGE_NAME: springweb
-
-stages:
-
-# 1) Build & Test
-- stage: Build
-  displayName: '🛠️ Build & Test'
-  jobs:
-  - job: BuildAndTest
-    displayName: 'Build and run tests'
+jobs:
+  - job: CheckoutOnly
+    displayName: '🔍 Checkout code'
     steps:
-      - task: JavaToolInstaller@0
-        displayName: 'Install Java 17'
-        inputs:
-          versionSpec: '17'
-          jdkArchitectureOption: 'x64'
-
-      - task: Gradle@2
-        displayName: 'Build & Test with Gradle'
-        inputs:
-          gradleWrapperFile: 'gradlew'
-          tasks: 'clean test'
-          options: '--no-daemon'
-
-      - task: PublishTestResults@2
-        displayName: 'Publish Test Results'
-        inputs:
-          testResultsFormat: 'JUnit'
-          testResultsFiles: '**/build/test-results/**/*.xml'
-          failTaskOnFailedTests: true
-
-# 2) Build & Push Docker
-- stage: DockerPush
-  displayName: '📦 Build & Push Docker'
-  dependsOn: Build
-  jobs:
-  - job: Docker
-    displayName: 'Build and Push image to ACR'
-    steps:
-      - script: |
-          # Authentifier via Managed Identity
-          az login --identity
-          # Construire l’image
-          docker build --file Dockerfile -t $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest .
-          # Pusher dans l’ACR
-          az acr login --name $(ACR_NAME)
-          docker push $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
-        displayName: 'Build & Push Docker via CLI'
-
-# 3) Deploy to Web App
-- stage: Deploy
-  displayName: '🚀 Deploy to Web App'
-  dependsOn: DockerPush
-  jobs:
-  - job: DeployWebApp
-    displayName: 'Deploy container to Web App'
-    steps:
-      - task: AzureWebAppContainer@1
-        displayName: 'Deploy to Azure Web App (Container)'
-        inputs:
-          azureSubscription: 'uami-managed-identity'
-          appName: 'springweb-app'
-          imageName: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest'
+      - checkout: self
