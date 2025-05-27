@@ -51,7 +51,7 @@ stages:
               command: buildAndPush
               repository: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME)'
               dockerfile: '**/Dockerfile'
-              containerRegistry: 'AzureRM-Springweb'   # <== nom de ta Service Connection
+              containerRegistry: 'uami-managed-identity'   # <== nom de ta Service Connection
               tags: |
                 latest
 
@@ -65,7 +65,7 @@ stages:
           - task: AzureWebAppContainer@1
             displayName: Deploy to Azure Web App (Container)
             inputs:
-              azureSubscription: 'AzureRM-Springweb'   # nom exact de ta Service Connection
+              azureSubscription: 'uami-managed-identity'   # nom exact de ta Service Connection
               appName: 'springweb-app'                 # nom exact de ton Web App
               imageName: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest'
               # if your Web App is Linux + container, tu peux laisser les autres champs par défaut
