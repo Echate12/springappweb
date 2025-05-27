@@ -1,17 +1,70 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  # Nom de votre ACR (sans .azurecr.io)
+  ACR_NAME: springacr98222
+  # Host complet de votre ACR
+  ACR_LOGIN_SERVER: $(ACR_NAME).azurecr.io
+  # Nom de l’image dans ACR
+  IMAGE_NAME: springweb
+
+stages:
+- stage: Build
+  displayName: '🛠️ Build & Test'
+  jobs:
+  - job: BuildAndTest
+    displayName: 'Build and run tests'
+    steps:
+      - task: JavaToolInstaller@0
+        displayName: 'Install Java 17'
+        inputs:
+          versionSpec: '17'
+          jdkArchitectureOption: 'x64'
+
+      - script: ./gradlew clean test --no-daemon
+        displayName: 'Run Gradle build & tests'
+
+      - task: PublishTestResults@2
+        displayName: 'Publish Test Results'
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '**/build/test-results/**/*.xml'
+          failTaskOnFailedTests: true
+
 - stage: DockerPush
-  displayName: 📦 Build & Push Docker
+  displayName: '📦 Build & Push Docker'
   dependsOn: Build
   jobs:
-    - job: docker
-      displayName: Build and Push Image
-      steps:
-        - task: Docker@2
-          displayName: Build and Push to ACR
-          inputs:
-            command: buildAndPush
-            azureSubscription: 'uami-managed-identity'
-            azureContainerRegistry: '$(ACR_NAME)'
-            repository: '$(IMAGE_NAME)'
-            dockerfile: '**/Dockerfile'
-            tags: |
-              latest
+  - job: Docker
+    displayName: 'Build and Push image to ACR'
+    steps:
+      - task: Docker@2
+        displayName: 'Build & Push to ACR'
+        inputs:
+          command: buildAndPush
+          azureSubscription: 'uami-managed-identity'
+          azureContainerRegistry: '$(ACR_NAME)'
+          repository: '$(IMAGE_NAME)'
+          dockerfile: '**/Dockerfile'
+          tags: |
+            latest
+
+- stage: Deploy
+  displayName: '🚀 Deploy to Web App'
+  dependsOn: DockerPush
+  jobs:
+  - job: DeployWebApp
+    displayName: 'Deploy container to Web App'
+    steps:
+      - task: AzureWebAppContainer@1
+        displayName: 'Deploy to Azure Web App (Container)'
+        inputs:
+          azureSubscription: 'uami-managed-identity'
+          appName: 'springweb-app'
+          imageName: '$(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest'
