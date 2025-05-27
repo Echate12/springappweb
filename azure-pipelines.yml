@@ -1,26 +1,26 @@
-- stage: DockerPush
-  displayName: '📦 Build & Push Docker'
-  dependsOn: Build
+- stage: Build
+  displayName: '🛠️ Build & Test'
   jobs:
-  - job: Docker
-    displayName: 'Build and Push image to ACR'
+  - job: BuildAndTest
+    pool:
+      vmImage: ubuntu-latest
     steps:
--      - task: Docker@2
--        displayName: 'Build & Push to ACR'
--        inputs:
--          command: buildAndPush
--          azureSubscription: 'uami-managed-identity'
--          azureContainerRegistry: '$(ACR_NAME)'
--          repository: '$(IMAGE_NAME)'
--          dockerfile: '**/Dockerfile'
--          tags: |
--            latest
-+      - script: |
-+          # Se connecter à l’ACR via Managed Identity
-+          az login --identity
-+          # Construire l’image
-+          docker build -f Dockerfile -t $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest .
-+          # Pusher dans l’ACR
-+          az acr login --name $(ACR_NAME)
-+          docker push $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):latest
-+        displayName: 'Build & Push Docker via CLI'
+      - task: JavaToolInstaller@0
+        displayName: 'Install Java 17'
+        inputs:
+          versionSpec: '17'
+          jdkArchitectureOption: 'x64'
+
+      # Option A: cross-platform script
+      - script: |
+          chmod +x ./gradlew
+          ./gradlew clean test --no-daemon
+        displayName: 'Run Gradle build & tests'
+
+      # Option B: use the Gradle task instead
+      #- task: Gradle@2
+      #  displayName: 'Build & Test with Gradle'
+      #  inputs:
+      #    gradleWrapperFile: 'gradlew'
+      #    tasks: 'clean test'
+      #    options: '--no-daemon'
